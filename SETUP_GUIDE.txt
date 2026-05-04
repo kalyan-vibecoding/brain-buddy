@@ -1,0 +1,225 @@
+================================================================
+  BRAINBUDDY KIDS — LOCAL SETUP GUIDE
+  Educational web app for children ages 4-8
+================================================================
+
+WHAT YOU'RE GETTING
+-------------------
+  - Frontend : React + Vite (TypeScript)
+  - Backend  : Express 5 API server (TypeScript)
+  - Database : PostgreSQL via Drizzle ORM
+  - Monorepo : pnpm workspaces
+
+
+================================================================
+  STEP 1 — INSTALL PREREQUISITES
+================================================================
+
+1a. Install Node.js v20 or higher
+    Download from: https://nodejs.org
+    Verify: node --version  (should show v20.x or higher)
+
+1b. Install pnpm (package manager)
+    Run: npm install -g pnpm
+    Verify: pnpm --version
+
+1c. Install a PostgreSQL database (pick ONE option below)
+
+    OPTION A — Local install (free, runs on your machine)
+    - Windows : https://www.postgresql.org/download/windows/
+    - macOS   : https://www.postgresql.org/download/macosx/
+                (or: brew install postgresql)
+    - Linux   : sudo apt install postgresql postgresql-contrib
+
+    OPTION B — Free cloud database (no install needed)
+    - Neon    : https://neon.tech        (recommended, free tier)
+    - Supabase: https://supabase.com     (free tier)
+    After signing up, copy the "Connection String" — you'll need it in Step 3.
+
+
+================================================================
+  STEP 2 — EXTRACT & OPEN IN VS CODE
+================================================================
+
+1. Unzip brainbuddy-kids-final.zip into a folder, e.g.
+       C:\Projects\brainbuddy-kids\    (Windows)
+       ~/Projects/brainbuddy-kids/     (Mac/Linux)
+
+2. Open VS Code, then:
+       File → Open Folder → select the unzipped folder
+
+3. Open the built-in terminal in VS Code:
+       View → Terminal  (or Ctrl+` / Cmd+`)
+
+
+================================================================
+  STEP 3 — CREATE ENVIRONMENT FILE
+================================================================
+
+In the VS Code terminal, create the environment file for the
+API server:
+
+  Mac/Linux:
+    cp artifacts/api-server/.env.example artifacts/api-server/.env
+
+  Windows (PowerShell):
+    copy artifacts\api-server\.env.example artifacts\api-server\.env
+
+Then open  artifacts/api-server/.env  and fill in the values:
+
+    DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/brainbuddy
+    SESSION_SECRET=replace-this-with-any-long-random-string-123!
+    PORT=8080
+
+  If using a local PostgreSQL install, your URL usually looks like:
+    postgresql://postgres:yourpassword@localhost:5432/brainbuddy
+
+  If using Neon or Supabase, paste the connection string they gave you.
+
+  TIP: Create the database first if using local Postgres:
+    psql -U postgres -c "CREATE DATABASE brainbuddy;"
+
+
+================================================================
+  STEP 4 — INSTALL DEPENDENCIES
+================================================================
+
+In the VS Code terminal, run from the project root:
+
+    pnpm install
+
+This installs all packages for the frontend, backend, and
+shared libraries. It may take 1-3 minutes the first time.
+
+
+================================================================
+  STEP 5 — SET UP THE DATABASE
+================================================================
+
+Run this once to create all the database tables:
+
+    pnpm --filter @workspace/db run push
+
+You should see output like:
+    [✓] Changes applied
+
+
+================================================================
+  STEP 6 — START THE APP
+================================================================
+
+You need TWO terminals running at the same time.
+
+  Terminal 1 — Start the backend API:
+    pnpm --filter @workspace/api-server run dev
+
+  Terminal 2 — Start the frontend:
+    pnpm --filter @workspace/brain-buddy-kids run dev
+
+Then open your browser and go to:
+    http://localhost:5173
+
+
+================================================================
+  USING THE APP
+================================================================
+
+  FOR KIDS:
+    Click "Let's Play!" on the home page.
+    This auto-creates a demo account and a child profile so
+    kids can start playing immediately.
+
+  FOR PARENTS:
+    Click "Parent Login" to register or log in.
+    The Parent Dashboard shows activity history, stars earned,
+    and badges unlocked for each child profile.
+
+  ACTIVITIES (8 total):
+    - Match the Shape
+    - Odd One Out
+    - Memory Cards
+    - Count Objects
+    - Pattern Builder
+    - Letter Sounds
+    - Brain Teaser
+    - Reading Words
+
+  Each session = 8 questions, no repeats.
+  Difficulty adapts automatically based on the child's age and
+  their performance (3 correct in a row = harder, 2 wrong = easier).
+
+
+================================================================
+  COMMON ISSUES
+================================================================
+
+  "Cannot connect to database"
+    - Make sure PostgreSQL is running locally, or your cloud
+      connection string is correct in .env
+    - Check there are no spaces around the = sign in .env
+
+  "pnpm: command not found"
+    - Run: npm install -g pnpm  then try again
+
+  "Port already in use"
+    - Change PORT=8081 in .env (API server)
+    - The Vite dev server port can be changed in
+      artifacts/brain-buddy-kids/vite.config.ts
+
+  "Module not found" errors
+    - Run pnpm install again from the project root
+
+  White screen / blank page
+    - Make sure BOTH the API server and the frontend are running
+    - Check both terminal windows for error messages
+
+
+================================================================
+  PROJECT STRUCTURE (QUICK REFERENCE)
+================================================================
+
+  brainbuddy-kids/
+  ├── artifacts/
+  │   ├── api-server/          Backend (Express 5, Node.js)
+  │   │   └── src/
+  │   │       ├── routes/      API endpoints
+  │   │       ├── middleware/  JWT auth
+  │   │       └── lib/         Logger, JWT helpers
+  │   └── brain-buddy-kids/    Frontend (React + Vite)
+  │       └── src/
+  │           ├── pages/       All screens + activities
+  │           ├── components/  Shared UI + game engine
+  │           └── lib/         Auth, sounds, utilities
+  ├── lib/
+  │   ├── api-spec/            OpenAPI spec (source of truth)
+  │   ├── api-client-react/    Generated React Query hooks
+  │   ├── api-zod/             Generated Zod validation schemas
+  │   └── db/                  Drizzle ORM schema + DB client
+  ├── package.json
+  ├── pnpm-workspace.yaml
+  └── SETUP_GUIDE.txt          (this file)
+
+
+================================================================
+  REGENERATING API CODE (ADVANCED)
+================================================================
+
+If you modify lib/api-spec/openapi.yaml (the API contract),
+regenerate the client hooks and server schemas with:
+
+    pnpm --filter @workspace/api-spec run codegen
+
+Then restart both servers.
+
+
+================================================================
+  NEED HELP?
+================================================================
+
+  - Node.js docs    : https://nodejs.org/docs
+  - pnpm docs       : https://pnpm.io
+  - Drizzle ORM     : https://orm.drizzle.team
+  - Vite docs       : https://vite.dev
+  - React Query     : https://tanstack.com/query
+
+================================================================

@@ -1,0 +1,637 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: BrainBuddy Kids API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: children
+    description: Child profile operations
+  - name: completions
+    description: Activity completion operations
+  - name: badges
+    description: Badge operations
+  - name: dashboard
+    description: Dashboard and stats operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerParent
+      tags: [auth]
+      summary: Register a new parent account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterParentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParentResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginParent
+      tags: [auth]
+      summary: Login as a parent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginParentBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParentResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated parent
+      responses:
+        "200":
+          description: Current parent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParentResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutParent
+      tags: [auth]
+      summary: Logout current parent
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /children:
+    get:
+      operationId: listChildren
+      tags: [children]
+      summary: List children for authenticated parent
+      responses:
+        "200":
+          description: List of children
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Child"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createChild
+      tags: [children]
+      summary: Create a child profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChildBody"
+      responses:
+        "201":
+          description: Child created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Child"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /children/{childId}:
+    get:
+      operationId: getChild
+      tags: [children]
+      summary: Get a child profile
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Child profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Child"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateChild
+      tags: [children]
+      summary: Update a child profile
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChildBody"
+      responses:
+        "200":
+          description: Updated child
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Child"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteChild
+      tags: [children]
+      summary: Delete a child profile
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /children/{childId}/completions:
+    get:
+      operationId: listCompletions
+      tags: [completions]
+      summary: List activity completions for a child
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of completions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityCompletion"
+    post:
+      operationId: createCompletion
+      tags: [completions]
+      summary: Record an activity completion for a child
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompletionBody"
+      responses:
+        "201":
+          description: Completion recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityCompletion"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /children/{childId}/badges:
+    get:
+      operationId: listBadges
+      tags: [badges]
+      summary: List badges earned by a child
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of badges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Badge"
+
+  /children/{childId}/stats:
+    get:
+      operationId: getChildStats
+      tags: [dashboard]
+      summary: Get aggregated stats for a child
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Child stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChildStats"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /children/{childId}/progress:
+    get:
+      operationId: getChildProgress
+      tags: [dashboard]
+      summary: Get recent activity progress for a child
+      parameters:
+        - name: childId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChildProgress"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    RegisterParentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+      required:
+        - name
+        - email
+        - password
+
+    LoginParentBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    ParentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        token:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - email
+        - createdAt
+
+    CreateChildBody:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          minimum: 4
+          maximum: 8
+        avatarColor:
+          type: string
+      required:
+        - name
+        - age
+
+    UpdateChildBody:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          minimum: 4
+          maximum: 8
+        avatarColor:
+          type: string
+
+    Child:
+      type: object
+      properties:
+        id:
+          type: integer
+        parentId:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+        avatarColor:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - parentId
+        - name
+        - age
+        - avatarColor
+        - createdAt
+
+    CreateCompletionBody:
+      type: object
+      properties:
+        activityType:
+          type: string
+          enum:
+            - match_shape
+            - odd_one_out
+            - memory_cards
+            - count_objects
+            - pattern_builder
+            - letter_sound
+            - brain_teaser
+            - reading_words
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 3
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        durationSeconds:
+          type: integer
+          minimum: 1
+        correct:
+          type: boolean
+      required:
+        - activityType
+        - stars
+        - difficulty
+        - durationSeconds
+        - correct
+
+    ActivityCompletion:
+      type: object
+      properties:
+        id:
+          type: integer
+        childId:
+          type: integer
+        activityType:
+          type: string
+        stars:
+          type: integer
+        difficulty:
+          type: string
+        durationSeconds:
+          type: integer
+        correct:
+          type: boolean
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - childId
+        - activityType
+        - stars
+        - difficulty
+        - durationSeconds
+        - correct
+        - completedAt
+
+    Badge:
+      type: object
+      properties:
+        id:
+          type: integer
+        childId:
+          type: integer
+        badgeType:
+          type: string
+        earnedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - childId
+        - badgeType
+        - earnedAt
+
+    ChildStats:
+      type: object
+      properties:
+        totalStars:
+          type: integer
+        totalActivities:
+          type: integer
+        activitiesToday:
+          type: integer
+        starsToday:
+          type: integer
+        timeSpentTodaySeconds:
+          type: integer
+        bestActivity:
+          type: ["string", "null"]
+        suggestedNextActivity:
+          type: string
+        currentDifficulty:
+          type: string
+        streakCorrect:
+          type: integer
+        totalBadges:
+          type: integer
+      required:
+        - totalStars
+        - totalActivities
+        - activitiesToday
+        - starsToday
+        - timeSpentTodaySeconds
+        - bestActivity
+        - suggestedNextActivity
+        - currentDifficulty
+        - streakCorrect
+        - totalBadges
+
+    ChildProgress:
+      type: object
+      properties:
+        recentCompletions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityCompletion"
+        activityBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityBreakdown"
+        weeklyStars:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyStar"
+      required:
+        - recentCompletions
+        - activityBreakdown
+        - weeklyStars
+
+    ActivityBreakdown:
+      type: object
+      properties:
+        activityType:
+          type: string
+        count:
+          type: integer
+        totalStars:
+          type: integer
+        avgStars:
+          type: number
+      required:
+        - activityType
+        - count
+        - totalStars
+        - avgStars
+
+    DailyStar:
+      type: object
+      properties:
+        date:
+          type: string
+        stars:
+          type: integer
+      required:
+        - date
+        - stars
